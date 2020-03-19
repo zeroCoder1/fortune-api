@@ -15,6 +15,21 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type joke struct {
+	Topic       string `json:"topic"`
+	Content     string `json:"joke"`
+}
+
+type allJokes []joke
+
+var events = allJokes {
+	{
+		Topic:          "1",
+		Content:       "Introduction to Golang",
+
+	},
+}
+
 func getFortune(filename string, fortunes int) string {
 	// filename : the file the fortune is being selected from
 	// fortunes : the total number of fortunes in the file
@@ -60,6 +75,7 @@ func getRandomFortune(w http.ResponseWriter, r *http.Request) {
 
 	var files []string
 	var datfiles []string
+	var newEvent joke
 
 	// Get list of all fortune files in datfiles
 	root := "datfiles"
@@ -106,8 +122,13 @@ func getRandomFortune(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fortune := getFortune(randFile, fortunes)
-	json.NewEncoder(w).Encode(fortune)
+	events = append(events, newEvent)
+	newEvent.Content = getFortune(randFile, fortunes)
+	s := strings.Split(randFile, "/")
+	newEvent.Topic = s[1]
+	//fortune := getFortune(randFile, fortunes)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(newEvent)
 }
 
 func getSpecificFortuneType(w http.ResponseWriter, r *http.Request) {
@@ -146,6 +167,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/", getRandomFortune).Methods("GET")
 	router.HandleFunc("/{genre}", getSpecificFortuneType).Methods("GET")
-	port := ":" + os.Getenv("PORT")
-	log.Fatal(http.ListenAndServe(port, router))
+	// port := ":" + os.Getenv("PORT")
+	// log.Fatal(http.ListenAndServe(port, router))
+	log.Fatal(http.ListenAndServe(":8080", router))
 }
