@@ -16,17 +16,18 @@ import (
 )
 
 type joke struct {
-	Topic       string `json:"topic"`
-	Content     string `json:"joke"`
+	Topic   string `json:"topic"`
+	Content string `json:"joke"`
+	Credits string `json:"credits"`
 }
 
 type allJokes []joke
 
-var events = allJokes {
+var jokes = allJokes{
 	{
-		Topic:          "1",
-		Content:       "Introduction to Golang",
-
+		Topic:   "1",
+		Content: "Introduction to Golang",
+		Credits: "shrutesh sharma",
 	},
 }
 
@@ -75,7 +76,7 @@ func getRandomFortune(w http.ResponseWriter, r *http.Request) {
 
 	var files []string
 	var datfiles []string
-	var newEvent joke
+	var newJoke joke
 
 	// Get list of all fortune files in datfiles
 	root := "datfiles"
@@ -122,13 +123,19 @@ func getRandomFortune(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	events = append(events, newEvent)
-	newEvent.Content = getFortune(randFile, fortunes)
+	jokes = append(jokes, newJoke)
 	s := strings.Split(randFile, "/")
-	newEvent.Topic = s[1]
+	newJoke.Topic = s[1]
+
+	j := getFortune(randFile, fortunes)
+	jokePart := strings.Split(j, "\n\t\t-- ")
+
+	newJoke.Content = jokePart[0]
+	newJoke.Credits = jokePart[1]
+
 	//fortune := getFortune(randFile, fortunes)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(newEvent)
+	json.NewEncoder(w).Encode(newJoke)
 }
 
 func getSpecificFortuneType(w http.ResponseWriter, r *http.Request) {
@@ -169,4 +176,6 @@ func main() {
 	router.HandleFunc("/{genre}", getSpecificFortuneType).Methods("GET")
 	port := ":" + os.Getenv("PORT")
 	log.Fatal(http.ListenAndServe(port, router))
+	// Uncomment above two line when pushing to prod and comment localhost
+	// log.Fatal(http.ListenAndServe(":8080", router))
 }
