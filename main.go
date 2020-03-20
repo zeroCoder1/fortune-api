@@ -131,7 +131,14 @@ func getRandomFortune(w http.ResponseWriter, r *http.Request) {
 	jokePart := strings.Split(j, "\n\t\t-- ")
 
 	newJoke.Content = jokePart[0]
-	newJoke.Credits = jokePart[1]
+
+	fmt.Println("\nCredit chosen:", jokePart)
+
+	if len(jokePart) > 1 {
+		newJoke.Credits = jokePart[1]
+	} else {
+		newJoke.Credits = ""
+	}
 
 	//fortune := getFortune(randFile, fortunes)
 	w.Header().Set("Content-Type", "application/json")
