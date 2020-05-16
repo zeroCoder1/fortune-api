@@ -70,6 +70,43 @@ func getFortune(filename string, fortunes int) string {
 	return fortune
 }
 
+func getTopics() []string {
+
+	var files []string
+	var datfiles []string
+	var retVal []string
+
+	// Get list of all fortune files in datfiles
+	root := "datfiles"
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		files = append(files, path)
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+	for _, file := range files {
+		if !strings.Contains(file, "CMakeLists.txt") && !strings.Contains(file, "off") && !strings.Contains(file, "README.md") && file != "datfiles" {
+			datfiles = append(datfiles, file)
+		}
+	}
+
+	for i, s := range datfiles {
+		fmt.Println(i)
+		result := strings.Replace(s, "datfiles/", "", -1)
+		retVal = append(retVal, result)
+	}
+
+	return retVal
+}
+
+func getAllTopics(w http.ResponseWriter, r *http.Request) {
+	var topics []string
+	topics = getTopics()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(topics)
+}
+
 func getRandomFortune(w http.ResponseWriter, r *http.Request) {
 	// Selects a random datfile to return a random fortune (not including offensive)
 	// Returns : the fortune in a formatted string
@@ -148,6 +185,8 @@ func getRandomFortune(w http.ResponseWriter, r *http.Request) {
 func getSpecificFortuneType(w http.ResponseWriter, r *http.Request) {
 	// Get a specific genre of fortune; must be a file within datfiles
 	params := mux.Vars(r)
+	var newJoke joke
+
 	if params["genre"] == "favicon.ico" {
 		return
 	}
@@ -173,16 +212,39 @@ func getSpecificFortuneType(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fortune := getFortune(filePath, fortunes)
-	json.NewEncoder(w).Encode(fortune)
+	// fortune := getFortune(filePath, fortunes)
+	// json.NewEncoder(w).Encode(fortune)
+
+	jokes = append(jokes, newJoke)
+	s := strings.Split(filePath, "/")
+	newJoke.Topic = s[1]
+
+	j := getFortune(filePath, fortunes)
+	jokePart := strings.Split(j, "\n\t\t-- ")
+
+	newJoke.Content = jokePart[0]
+
+	fmt.Println("\nCredit chosen:", jokePart)
+
+	if len(jokePart) > 1 {
+		newJoke.Credits = jokePart[1]
+	} else {
+		newJoke.Credits = ""
+	}
+
+	//fortune := getFortune(randFile, fortunes)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(newJoke)
 }
 
 func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/", getRandomFortune).Methods("GET")
-	router.HandleFunc("/{genre}", getSpecificFortuneType).Methods("GET")
-	port := ":" + os.Getenv("PORT")
-	log.Fatal(http.ListenAndServe(port, router))
+	router.HandleFunc("/topics/{genre}", getSpecificFortuneType).Methods("GET")
+	router.HandleFunc("/topics", getAllTopics).Methods("GET")
+
+	// port := ":" + os.Getenv("PORT")
+	// log.Fatal(http.ListenAndServe(port, router))
 	// Uncomment above two line when pushing to prod and comment localhost
-	// log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":8080", router))
 }
