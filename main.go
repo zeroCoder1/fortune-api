@@ -243,8 +243,8 @@ func main() {
 	router.HandleFunc("/topics/{genre}", getSpecificFortuneType).Methods("GET")
 	router.HandleFunc("/topics", getAllTopics).Methods("GET")
 
-	// port := ":" + os.Getenv("PORT")
-	// log.Fatal(http.ListenAndServe(port, router))
+	port := ":" + os.Getenv("PORT")
+	log.Fatal(http.ListenAndServe(port, router))
 	// Uncomment above two line when pushing to prod and comment localhost
-	log.Fatal(http.ListenAndServe(":8080", router))
+	//	log.Fatal(http.ListenAndServe(":8080", router))
 }
